@@ -1,4 +1,4 @@
-(ns pedestal.views
+(ns com.cognitect.pedestal.views
   (:require [io.pedestal.log :as log]
             [clojure.spec :as s]))
 
