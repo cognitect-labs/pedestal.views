@@ -1,16 +1,22 @@
 (ns pedestal.views
-  (:require [io.pedestal.log :as log]))
+  (:require [io.pedestal.log :as log]
+            [clojure.spec :as s]))
 
-(defn- kw->var [k]
-  (resolve (symbol (namespace k) (name k))))
+(defn- kw->sym [k]
+  (symbol (namespace k) (name k)))
+
+(s/def ::view-selector
+  (s/nilable
+   (s/or :fn fn? :symbol symbol? :keyword keyword? :var var?)))
 
 (defn- locate-render-fn
   [selector]
+  {:pre [(s/valid? ::view-selector selector)]}
   (cond
     (fn? selector)      selector
-    (symbol? selector)  (locate-render-fn (resolve selector))
-    (var? selector)     (locate-render-fn (var-get selector))
-    (keyword? selector) (locate-render-fn (kw->var selector))))
+    (var? selector)     (var-get selector)
+    (symbol? selector)  (var-get (resolve selector))
+    (keyword? selector) (var-get (resolve (kw->sym selector)))))
 
 (defn- render
   [response]
