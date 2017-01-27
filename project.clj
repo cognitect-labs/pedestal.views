@@ -3,4 +3,6 @@
   :url "https://github.com/cognitect-labs/pedestal.views"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]])
+  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
+                 [io.pedestal/pedestal.interceptor "0.5.2"]
+                 [io.pedestal/pedestal.log "0.5.2"]])

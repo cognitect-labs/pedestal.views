@@ -6,34 +6,36 @@
   (symbol (namespace k) (name k)))
 
 (s/def ::view-selector
-  (s/nilable
-   (s/or :fn fn? :symbol symbol? :keyword keyword? :var var?)))
+  (s/or :fn fn? :symbol symbol? :keyword keyword? :var var?))
+
+(defn- var-get-if-bound
+  [x]
+  (when (.isBound x)
+    (var-get x)))
 
 (defn- locate-render-fn
   [selector]
   {:pre [(s/valid? ::view-selector selector)]}
   (cond
-    (fn? selector)      selector
-    (var? selector)     (var-get selector)
-    (symbol? selector)  (var-get (resolve selector))
-    (keyword? selector) (var-get (resolve (kw->sym selector)))))
+    (fn?      selector) selector
+    (var?     selector) (some-> selector var-get-if-bound)
+    (symbol?  selector) (some-> selector resolve var-get-if-bound)
+    (keyword? selector) (some-> selector kw->sym resolve var-get-if-bound)))
 
 (defn- render
   [response]
-  (if-let [render-fn (locate-render-fn (:view response))]
+  (let [render-fn (locate-render-fn (:view response))]
+    (assert render-fn (str "Missing render function for view" (:view response)))
     (let [contents (render-fn response)
           contents (if (coll? contents) (apply str contents) contents)
           status   (or (:status response) 200)]
       (assoc response
              :body contents
-             :status status))
-    (do
-      (log/warn :msg "Missing render function for view" :view (:view response))
-      response)))
+             :status status))))
 
 (defn- needs-rendering?
   [ctx]
-  (get-in ctx [:response :view]))
+  (contains? (:response ctx) :view))
 
 (def renderer
   {:name ::renderer
