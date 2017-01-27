@@ -3,3 +3,4 @@
 * TODO Create a protocol for different template/render engines
 * TODO Implement that protocol for enlive
 * TODO Make the rendering interceptor function take an engine
+* TODO Test that an existing response is not overwritten

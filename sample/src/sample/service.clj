@@ -7,34 +7,25 @@
             [pedestal.views :as views]
             [stencil.core :as stencil]))
 
-(defn ok
-  [body]
-  {:status 200
-   :body   body})
-
-
 (defn about-page
   [request]
   {:view            :sample.views/about
    :clojure-version (clojure-version)
    :url             (route/url-for ::about-page)})
 
-(defn kw->var [k]
-  (resolve (symbol (namespace k) (name k))))
-
 (defn home-page-enlive
   [request]
-  (let [view-selector :sample.views/enlive
-        resp-map {:text "bar" :body "Hello, world!"}]
-    (ok (apply str ((kw->var view-selector) resp-map)))))
+  {:view :sample.views/enlive
+   :text "bar"
+   :body "Hello, world!"})
 
 (defn home-page-stencil
   [request]
-  (let [view-selector :sample.views/stencil
-        resp-map {:text "bar" :body "Hello, world!"}]
-    (ok ((kw->var view-selector) resp-map))))
+  {:view :sample.views/stencil
+   :text "bar"
+   :body "Hello, world!"})
 
-(def common-interceptors [(body-params/body-params) http/html-body (views/renderer)])
+(def common-interceptors [(body-params/body-params) http/html-body views/renderer])
 
 (def routes #{["/enlive"  :get (conj common-interceptors `home-page-enlive)]
               ["/stencil" :get (conj common-interceptors `home-page-stencil)]
