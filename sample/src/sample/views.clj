@@ -7,9 +7,10 @@
   [:h1] (html/content title))
 
 (deftemplate enlive "layout.html"
-  [{:keys [text body]}]
+  [{:keys [text body url]}]
   [:#title]   (html/substitute (title text))
-  [:#wrapper] (html/content body))
+  [:#wrapper] (html/content body)
+  [:a]        (html/set-attr :href url))
 
 (defn stencil
   [data]

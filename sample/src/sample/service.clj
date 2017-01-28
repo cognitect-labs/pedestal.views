@@ -4,26 +4,29 @@
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
             [sample.views]
-            [pedestal.views :as views]
+            [com.cognitect.pedestal.views :as views]
             [stencil.core :as stencil]))
 
 (defn about-page
   [request]
-  {:view            :sample.views/about
-   :clojure-version (clojure-version)
-   :url             (route/url-for ::about-page)})
+  {:view :sample.views/enlive
+   :text "About"
+   :body (clojure-version)
+   :url  (route/url-for ::about-page)})
 
 (defn home-page-enlive
   [request]
   {:view :sample.views/enlive
-   :text "bar"
-   :body "Hello, world!"})
+   :text "Enlive"
+   :body "Hello, world!"
+   :url  (route/url-for ::home-page-enlive)})
 
 (defn home-page-stencil
   [request]
   {:view :sample.views/stencil
-   :text "bar"
-   :body "Hello, world!"})
+   :text "Stencil"
+   :body "Hello, world!"
+   :url  (route/url-for ::home-page-stencil)})
 
 (def common-interceptors [(body-params/body-params) http/html-body views/renderer])
 
