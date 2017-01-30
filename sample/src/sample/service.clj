@@ -9,21 +9,21 @@
 
 (defn about-page
   [request]
-  {:view :sample.views/enlive
+  {:view :sample.views/home-page-with-enlive
    :text "About"
    :body (clojure-version)
    :url  (route/url-for ::about-page)})
 
 (defn home-page-enlive
   [request]
-  {:view :sample.views/enlive
+  {:view :sample.views/home-page-with-enlive
    :text "Enlive"
    :body "Hello, world!"
    :url  (route/url-for ::home-page-enlive)})
 
 (defn home-page-stencil
   [request]
-  {:view :sample.views/stencil
+  {:view :sample.views/home-page-with-stencil
    :text "Stencil"
    :body "Hello, world!"
    :url  (route/url-for ::home-page-stencil)})

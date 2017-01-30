@@ -6,12 +6,12 @@
   [title]
   [:h1] (html/content title))
 
-(deftemplate enlive "layout.html"
+(deftemplate home-page-with-enlive "layout.html"
   [{:keys [text body url]}]
   [:#title]   (html/substitute (title text))
   [:#wrapper] (html/content body)
   [:a]        (html/set-attr :href url))
 
-(defn stencil
+(defn home-page-with-stencil
   [data]
   (stencil/render-file "layout-stencil" data))
