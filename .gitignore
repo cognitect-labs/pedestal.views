@@ -1,13 +1,28 @@
+
+# Leiningen related
 /target
 /classes
 /checkouts
-pom.xml
-pom.xml.asc
-*.jar
-*.class
 /.lein-*
 /.nrepl-port
 .hgignore
 .hg/
 .floo
 .flooignore
+
+# Java related
+pom.xml
+pom.xml.asc
+*jar
+*.class
+
+# Temp Files
+tmp/
+*.orig
+*~
+.*.swp
+.*.swo
+*.tmp
+*.bak
+
+

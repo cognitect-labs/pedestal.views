@@ -10,7 +10,7 @@
 
 (defn- var-get-if-bound
   [x]
-  (when (.isBound x)
+  (when (and x (bound? x))
     (var-get x)))
 
 (defn- locate-render-fn
