@@ -9,8 +9,8 @@
   (s/or :fn fn? :symbol symbol? :keyword keyword? :var var?))
 
 (defn- var-get-if-bound
-  [x]
-  (when (and x (bound? x))
+  [^clojure.lang.Var x]
+  (when (and x (.isBound x))
     (var-get x)))
 
 (defn- locate-render-fn
