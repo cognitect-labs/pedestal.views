@@ -1,6 +1,0 @@
-* NEXT Write sample to demonstrate usage/explore developer experience
-* TODO Create a function to return a "rendering interceptor".
-* TODO Create a protocol for different template/render engines
-* TODO Implement that protocol for enlive
-* TODO Make the rendering interceptor function take an engine
-* TODO Test that an existing response is not overwritten
