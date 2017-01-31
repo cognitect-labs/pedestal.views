@@ -2,6 +2,40 @@
   (:require [io.pedestal.log :as log]
             [clojure.spec :as s]))
 
+(defn- assert-render-fn!
+  [ctx]
+  (assert
+   (-> ctx :response :render-fn)
+   (str "Missing render function for view "
+        (-> ctx :response :view)))
+  ctx)
+
+(defn- render
+  [response]
+  (let [contents ((:render-fn response) response)
+        status   (or (:status response) 200)]
+    (assoc response
+           :body (if (coll? contents)
+                   (apply str contents)
+                   contents)
+           :status status)))
+
+(defn- needs-rendering?
+  [ctx]
+  (contains? (:response ctx) :view))
+
+(defn make-renderer
+  [render-fn-resolver]
+  {:name ::renderer
+   :leave
+   (fn [ctx]
+     (if (needs-rendering? ctx)
+       (-> ctx
+           render-fn-resolver
+           assert-render-fn!
+           (update :response render))
+       ctx))})
+
 (defn- kw->sym [k]
   (symbol (namespace k) (name k)))
 
@@ -22,25 +56,9 @@
     (symbol?  selector) (some-> selector resolve var-get-if-bound)
     (keyword? selector) (some-> selector kw->sym resolve var-get-if-bound)))
 
-(defn- render
-  [response]
-  (let [render-fn (locate-render-fn (:view response))]
-    (assert render-fn (str "Missing render function for view" (:view response)))
-    (let [contents (render-fn response)
-          contents (if (coll? contents) (apply str contents) contents)
-          status   (or (:status response) 200)]
-      (assoc response
-             :body contents
-             :status status))))
-
-(defn- needs-rendering?
+(defn view-key-resolver
   [ctx]
-  (contains? (:response ctx) :view))
+  (assoc-in ctx [:response :render-fn]
+            (locate-render-fn (some-> ctx :response :view))))
 
-(def renderer
-  {:name ::renderer
-   :leave
-   (fn [ctx]
-     (if (needs-rendering? ctx)
-       (update ctx :response render)
-       ctx))})
+(def renderer (make-renderer view-key-resolver))

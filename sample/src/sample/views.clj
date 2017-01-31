@@ -1,6 +1,5 @@
 (ns sample.views
-  (:require [net.cgrand.enlive-html :as html :refer [deftemplate defsnippet]]
-            [stencil.core :as stencil]))
+  (:require [net.cgrand.enlive-html :as html :refer [deftemplate defsnippet]]))
 
 (defsnippet title "layout.html" [:#title]
   [title]

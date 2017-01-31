@@ -5,7 +5,7 @@
             [io.pedestal.http.body-params :as body-params]
             [sample.views]
             [com.cognitect.pedestal.views :as views]
-            [stencil.core :as stencil]))
+            [com.cognitect.pedestal.views.stencil :as stencil]))
 
 (defn about-page
   [request]
@@ -23,16 +23,17 @@
 
 (defn home-page-stencil
   [request]
-  {:view :sample.views/home-page-with-stencil
+  {:view (if (contains? (:params request) :error) :abby-normal :normal)
    :text "Stencil"
    :body "Hello, world!"
    :url  (route/url-for ::home-page-stencil)})
 
-(def common-interceptors [(body-params/body-params) http/html-body views/renderer])
+(def enlive-interceptors  [(body-params/body-params) http/html-body views/renderer])
+(def stencil-interceptors [(body-params/body-params) http/html-body stencil/renderer])
 
-(def routes #{["/enlive"  :get (conj common-interceptors `home-page-enlive)]
-              ["/stencil" :get (conj common-interceptors `home-page-stencil)]
-              ["/about"   :get (conj common-interceptors `about-page)]})
+(def routes #{["/enlive"  :get (conj enlive-interceptors `home-page-enlive)]
+              ["/about"   :get (conj enlive-interceptors `about-page)]
+              ["/stencil" :get (conj stencil-interceptors `home-page-stencil)]})
 
 
 (def service {::http/routes routes
