@@ -1,6 +1,9 @@
 (ns com.cognitect.pedestal.views
   (:require [io.pedestal.log :as log]
-            [clojure.spec :as s]))
+            [clojure.spec :as s])
+  (:import  [javax.servlet.http HttpServletResponse]
+            [java.nio.charset Charset]
+            [java.nio ByteBuffer]))
 
 (defn- assert-render-fn!
   [ctx]
@@ -10,31 +13,61 @@
         (-> ctx :response :view)))
   ctx)
 
+(defn- too-long?
+  [body limit]
+  (< limit (count body)))
+
 (defn- render
-  [response]
-  (let [contents ((:render-fn response) response)
-        status   (or (:status response) 200)]
+  [response async-limit content-type wrapper]
+  (let [contents       ((:render-fn response) response)
+        contents       (if (coll? contents)
+                         (apply str contents)
+                         contents)
+        content-length (count contents)
+        headers        (or (:headers response) {})
+        headers        (assoc headers
+                              "Content-Length" (str content-length)
+                              "Content-Type"   content-type)
+        body           (if (< async-limit content-length)
+                         (wrapper contents)
+                         contents)
+        status         (or (:status response) 200)]
     (assoc response
-           :body (if (coll? contents)
-                   (apply str contents)
-                   contents)
-           :status status)))
+           :body    body
+           :headers headers
+           :status  status)))
 
 (defn- needs-rendering?
   [ctx]
   (contains? (:response ctx) :view))
+
+(def utf-8 (Charset/forName "UTF-8"))
+
+(defn- wrap-byte-buffer
+  [body charset]
+  (ByteBuffer/wrap (.getBytes body charset)))
+
+(defn- async-cutoff
+  [ctx]
+  (if-let [servlet-response (get-in ctx [:response :servlet-response])]
+    (.getBufferSize ^HttpServletResponse servlet-response)
+    ;; let's play it safe and assume 1500 MTU
+    1460))
 
 (defn make-renderer
   [render-fn-resolver]
   {:name ::renderer
    :leave
    (fn [ctx]
-     (if (needs-rendering? ctx)
-       (-> ctx
-           render-fn-resolver
-           assert-render-fn!
-           (update :response render))
-       ctx))})
+     (let [content-type (str "text/html;charset=" (.name utf-8))
+           wrapper      #(wrap-byte-buffer % utf-8)
+           async-limit  (async-cutoff ctx)]
+       (if (needs-rendering? ctx)
+         (-> ctx
+             render-fn-resolver
+             assert-render-fn!
+             (update :response render async-limit content-type wrapper))
+         ctx)))})
 
 (defn- kw->sym [k]
   (symbol (namespace k) (name k)))
