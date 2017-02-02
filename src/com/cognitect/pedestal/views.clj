@@ -2,7 +2,8 @@
   (:require [io.pedestal.log :as log]
             [clojure.spec :as s])
   (:import  [javax.servlet.http HttpServletResponse]
-            [java.nio.charset Charset]
+            [java.nio.charset Charset
+                              StandardCharsets]
             [java.nio ByteBuffer]))
 
 (defn- assert-render-fn!
@@ -13,9 +14,11 @@
         (-> ctx :response :view)))
   ctx)
 
-(defn- too-long?
-  [body limit]
-  (< limit (count body)))
+(defn- format-body
+  [contents ^long content-length ^long limit wrapper]
+  (if (< content-length limit)
+    contents
+    (wrapper contents)))
 
 (defn- render
   [response async-limit content-type wrapper]
@@ -28,10 +31,8 @@
         headers        (assoc headers
                               "Content-Length" (str content-length)
                               "Content-Type"   content-type)
-        body           (if (< async-limit content-length)
-                         (wrapper contents)
-                         contents)
-        status         (or (:status response) 200)]
+        body           (format-body contents content-length async-limit wrapper)
+        status         (:status response 200)]
     (assoc response
            :body    body
            :headers headers
@@ -41,10 +42,8 @@
   [ctx]
   (contains? (:response ctx) :view))
 
-(def utf-8 (Charset/forName "UTF-8"))
-
 (defn- wrap-byte-buffer
-  [body charset]
+  [^String body ^Charset charset]
   (ByteBuffer/wrap (.getBytes body charset)))
 
 (defn- async-cutoff
@@ -59,8 +58,8 @@
   {:name ::renderer
    :leave
    (fn [ctx]
-     (let [content-type (str "text/html;charset=" (.name utf-8))
-           wrapper      #(wrap-byte-buffer % utf-8)
+     (let [content-type (str "text/html;charset=" (.name StandardCharsets/UTF_8))
+           wrapper      #(wrap-byte-buffer % StandardCharsets/UTF_8)
            async-limit  (async-cutoff ctx)]
        (if (needs-rendering? ctx)
          (-> ctx
