@@ -58,8 +58,9 @@
   {:name ::renderer
    :leave
    (fn [ctx]
-     (let [content-type (str "text/html;charset=" (.name StandardCharsets/UTF_8))
-           wrapper      #(wrap-byte-buffer % StandardCharsets/UTF_8)
+     (let [^Charset charset StandardCharsets/UTF_8
+           content-type (str "text/html;charset=" (.name charset))
+           wrapper      #(wrap-byte-buffer % charset)
            async-limit  (async-cutoff ctx)]
        (if (needs-rendering? ctx)
          (-> ctx
