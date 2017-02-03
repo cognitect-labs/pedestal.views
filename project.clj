@@ -17,5 +17,4 @@
                                       *assert*             true}
                         :pedantic? :abort}}
   :dependencies [[io.pedestal/pedestal.interceptor "0.5.2"] ;; Uses [org.clojure/core.cache "0.6.5"]
-                 [io.pedestal/pedestal.log "0.5.2"]
-                 [stencil "0.5.0" :exclusions [[org.clojure/core.cache]]]])
+                 [io.pedestal/pedestal.log "0.5.2"]])

@@ -5,9 +5,8 @@
             [io.pedestal.http.body-params :as body-params]
             [sample.views]
             [com.cognitect.pedestal.views :as views]
-            [com.cognitect.pedestal.views.template :as template]
-            [stencil.core :as stencil]
-            [selmer.parser :as selmer]))
+            [com.cognitect.pedestal.views.stencil :as stencil]
+            [com.cognitect.pedestal.views.selmer :as selmer]))
 
 (defn about-page
   [request]
@@ -38,8 +37,8 @@
    :url  (route/url-for ::home-page-selmer)})
 
 (def enlive-interceptors  [(body-params/body-params) http/html-body views/renderer])
-(def stencil-interceptors [(body-params/body-params) http/html-body (template/renderer stencil/render-file)])
-(def selmer-interceptors [(body-params/body-params) http/html-body (template/renderer selmer/render-file :file-suffix "html")])
+(def stencil-interceptors [(body-params/body-params) http/html-body stencil/renderer])
+(def selmer-interceptors [(body-params/body-params) http/html-body selmer/renderer])
 
 (def routes #{["/enlive"  :get (conj enlive-interceptors `home-page-enlive)]
               ["/about"   :get (conj enlive-interceptors `about-page)]
