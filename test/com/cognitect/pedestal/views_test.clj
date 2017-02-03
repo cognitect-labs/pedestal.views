@@ -1,13 +1,13 @@
 (ns com.cognitect.pedestal.views-test
   (:require [clojure.test :refer :all]
             [com.cognitect.pedestal.views :refer :all]
-            [io.pedestal.interceptor.chain :as chain])
+            [io.pedestal.interceptor.chain :as chain]
+            [stencil.core :as stencil]
+            [selmer.parser :as selmer]
+            [com.cognitect.pedestal.views.template :as template]
+            [com.cognitect.pedestal.views.test-util :refer [run-interceptor]])
   (:import clojure.lang.ExceptionInfo
            java.nio.ByteBuffer))
-
-(defn- run-interceptor
-  ([i]     (run-interceptor {} i))
-  ([ctx i] (chain/execute (chain/enqueue* ctx i))))
 
 (defn- ctx-with-renderer
   [r]

@@ -19,7 +19,8 @@
 
                  [pedestal.views "0.1.0-SNAPSHOT"]
                  [enlive "1.1.6"]
-                 [stencil "0.5.0"]]
+                 [stencil "0.5.0"]
+                 [selmer "1.10.5"]]
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   ;; If you use HTTP/2 or ALPN, use the java-agent to pull in the correct alpn-boot dependency
