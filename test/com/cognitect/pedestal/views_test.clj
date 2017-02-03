@@ -1,7 +1,9 @@
 (ns com.cognitect.pedestal.views-test
   (:require [clojure.test :refer :all]
             [com.cognitect.pedestal.views :refer :all]
-            [io.pedestal.interceptor.chain :as chain])
+            [io.pedestal.interceptor.chain :as chain]
+            [com.cognitect.pedestal.views.stencil :as stencil]
+            [com.cognitect.pedestal.views.selmer :as selmer])
   (:import clojure.lang.ExceptionInfo
            java.nio.ByteBuffer))
 
@@ -85,5 +87,19 @@
 
 (deftest long-messages-are-async
   (is (async-response? (canned-text (repeat 4096 "A")))))
+
+(deftest template-renderer-tests
+  (testing "Rendering with Stencil"
+    (is (= "cake\n"
+           (-> (run-interceptor {:response {:view :example-stencil :dessert "cake"}}
+                                stencil/renderer)
+               :response
+               :body))))
+  (testing "Rendering with Selmer"
+    (is (= "cake\n"
+           (-> (run-interceptor {:response {:view :example-selmer :dessert "cake"}}
+                                selmer/renderer)
+               :response
+               :body)))))
 
 (run-tests)

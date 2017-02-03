@@ -72,6 +72,9 @@
 (defn- kw->sym [k]
   (symbol (namespace k) (name k)))
 
+(defn- kw->str [k]
+  (subs (str k) 1))
+
 (s/def ::view-selector
   (s/or :fn fn? :symbol symbol? :keyword keyword? :var var?))
 
@@ -89,9 +92,28 @@
     (symbol?  selector) (some-> selector resolve var-get-if-bound)
     (keyword? selector) (some-> selector kw->sym resolve var-get-if-bound)))
 
-(defn view-key-resolver
-  [ctx]
-  (assoc-in ctx [:response :render-fn]
-            (locate-render-fn (some-> ctx :response :view))))
+(defn attach-renderer
+  [ctx f]
+  (assoc-in ctx [:response :render-fn] f))
 
-(def renderer (make-renderer view-key-resolver))
+(defn view-function-resolver
+  "Resolves the :view in the ctx's response to a render fn and attaches it."
+  [ctx]
+  (attach-renderer ctx (locate-render-fn (some-> ctx :response :view))))
+
+(defn make-template-resolver
+  "Returns a view-template-resolver fn which resolves the :view
+  in the ctx's response to a template-based render fn and attaches it."
+  [template-render-fn]
+  (fn [ctx]
+    (attach-renderer ctx (partial template-render-fn
+                                  (some-> ctx
+                                          :response
+                                          :view
+                                          kw->str)))))
+
+(defn make-template-renderer
+  [template-render-fn]
+  (make-renderer (make-template-resolver template-render-fn)))
+
+(def renderer (make-renderer view-function-resolver))
