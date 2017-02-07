@@ -1,0 +1,2 @@
+#!/bin/bash
+echo src:test:`cat bin/cached-classpath`:.repl/lib/*
