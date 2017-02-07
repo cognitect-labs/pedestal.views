@@ -11,7 +11,6 @@
 .flooignore
 
 # Java related
-pom.xml
 pom.xml.asc
 *jar
 *.class
@@ -24,5 +23,3 @@ tmp/
 .*.swo
 *.tmp
 *.bak
-
-
