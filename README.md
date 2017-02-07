@@ -1,6 +1,6 @@
 # pedestal.views
 
-[![CircleCI](https://circleci.com/gh/cognitect-labs/pedestal.views.svg?style=svg)](https://circleci.com/gh/cognitect-labs/pedestal.views)
+[![CircleCI](https://circleci.com/gh/cognitect-labs/pedestal.views.svg?style=svg&circle-token=94d6ecab0a16059d1b0a8cac2eb13e39d0a2b112)](https://circleci.com/gh/cognitect-labs/pedestal.views)
 
 Server-side rendering interceptors.
 
