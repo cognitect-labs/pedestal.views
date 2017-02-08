@@ -11,10 +11,6 @@
                                        [org.clojure/clojure "1.9.0-alpha14"                    :scope "provided"]
                                        [criterium "0.4.4"]]
                         :resource-paths ["test/resources"]
-                        :global-vars {*warn-on-reflection* true
-                                      *unchecked-math*     :warn-on-boxed
-                                      ;*compiler-options*  {:disable-locals-clearing true}
-                                      *assert*             true}
-                        :pedantic? :abort}}
-  :dependencies [[io.pedestal/pedestal.interceptor "0.5.2"] ;; Uses [org.clojure/core.cache "0.6.5"]
+                        :global-vars {*warn-on-reflection* true}}}
+  :dependencies [[io.pedestal/pedestal.interceptor "0.5.2"]
                  [io.pedestal/pedestal.log "0.5.2"]])

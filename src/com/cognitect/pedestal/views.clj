@@ -1,10 +1,13 @@
 (ns com.cognitect.pedestal.views
-  (:require [io.pedestal.log :as log]
-            [clojure.spec :as s])
-  (:import  [javax.servlet.http HttpServletResponse]
-            [java.nio.charset Charset
-                              StandardCharsets]
-            [java.nio ByteBuffer]))
+  (:require [clojure.edn :as edn]
+            [clojure.spec :as s]
+            [clojure.walk :as walk]
+            [io.pedestal.interceptor :as i]
+            [io.pedestal.log :as log])
+  (:import java.net.URLDecoder
+           java.nio.ByteBuffer
+           [java.nio.charset Charset StandardCharsets]
+           javax.servlet.http.HttpServletResponse))
 
 (defn- assert-render-fn!
   [ctx]
@@ -117,3 +120,112 @@
   (make-renderer (make-template-resolver template-render-fn)))
 
 (def renderer (make-renderer view-function-resolver))
+
+(defn- dynaload
+  [s]
+  (let [nssym (symbol (namespace s))
+        _     (require :reload nssym)
+        n     (find-ns nssym)]
+    (var-get (ns-resolve n (symbol (name s))))))
+
+(s/def ::engine-type    #{:default :stencil :selmer})
+(s/def ::engine-literal (s/keys :req-un [::engine-type]))
+
+(defn engine-literal
+  [form]
+  {:pre [(s/valid? ::engine-literal form)]}
+  (case (get form :engine-type :default)
+    :default renderer
+    :stencil (dynaload 'com.cognitect.pedestal.views.stencil/renderer)
+    :selmer  (dynaload 'com.cognitect.pedestal.views.selmer/renderer)))
+
+;; The several functions are copied from Vase
+;;
+;; It is duplication, but in this case preferrable to a new dependency.
+(defn map-vals
+  [f m]
+  (reduce-kv (fn [m k v] (assoc m k (f v))) m m))
+
+(defn dynamic-interceptor
+  "Build an interceptor/interceptor from a map of keys to
+  expressions. The expressions will be evaluated and must evaluate to
+  a function of 1 argument. At runtime the function will be called
+  with a Pedestal context map."
+  [name literal exprs]
+  (with-meta
+    (i/interceptor
+     (merge
+      {:name name}
+      (map-vals eval exprs)))
+    {:action-literal literal}))
+
+(defn decode-map
+  "URL Decode the values of a Map
+  This opens up the potential for non-sanitized input to be rendered."
+  [m]
+  (walk/postwalk
+   #(cond-> %
+      (string? %)
+      (URLDecoder/decode %))
+   m))
+
+(defn merged-parameters
+  [request]
+  {:post [(map? %)]}
+  (let [{:keys [path-params params json-params edn-params]} request]
+    (merge
+     (if (empty? path-params)
+       {}
+       (decode-map path-params))
+     params
+     json-params
+     edn-params)))
+
+(defn bind
+  [param-syms]
+  (let [param-keys (mapv #(if (vector? %) (first %) %) param-syms)
+        param-defaults (into {} (filter vector? param-syms))]
+    `{:keys ~(or param-keys [])
+      :or ~param-defaults}))
+;;
+;; end of snitching from Vase
+;;
+
+(defn render-action-exprs
+  "Return code for a Pedestal interceptor that will respond with a
+  canned response. The same `body`, `status`, and `headers` arguments
+  are returned for every HTTP request."
+  [params view]
+  `(fn [{~'request :request :as ~'context}]
+     (let [~(bind params) (merged-parameters ~'request)
+           key#           ~view]
+       (assoc-in ~'context [:response :view] key#))))
+
+(defn render-action
+  "Return a Pedestal interceptor that attaches a view key to the
+  response"
+  [name params view]
+  (dynamic-interceptor
+   name
+   :respond
+   {:enter (render-action-exprs params view)
+    :action-literal
+    :views/render}))
+
+(defrecord RenderAction [name params view]
+  i/IntoInterceptor
+  (-interceptor [_]
+    (render-action name params view)))
+
+(s/def ::name keyword?)
+(s/def ::view keyword?)
+(s/def ::params seq?)
+(s/def ::render-literal (s/keys :req-un [::name ::view] :opt-un [::params]))
+
+(defn render-literal
+  [form]
+  {:pre [(s/valid? ::render-literal form)]}
+  (map->RenderAction form))
+
+(defmethod print-method RenderAction [t ^java.io.Writer w]
+  (.write w (str "#views/render" (into {} t))))
