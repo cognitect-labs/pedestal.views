@@ -1,4 +1,4 @@
-(defproject pedestal.views "0.1.0-SNAPSHOT"
+(defproject com.cognitect/pedestal.views "0.1.0-SNAPSHOT"
   :description "Library of interceptors to make server-side rendering easy again"
   :url "https://github.com/cognitect-labs/pedestal.views"
   :license {:name "Eclipse Public License"

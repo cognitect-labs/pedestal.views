@@ -129,7 +129,7 @@
     (var-get (ns-resolve n (symbol (name s))))))
 
 (s/def ::engine-type    #{:default :stencil :selmer})
-(s/def ::engine-literal (s/keys :req-un [::engine-type]))
+(s/def ::engine-literal (s/keys :opt-un [::engine-type]))
 
 (defn engine-literal
   [form]

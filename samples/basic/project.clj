@@ -17,7 +17,7 @@
                  [org.slf4j/jcl-over-slf4j "1.7.22"]
                  [org.slf4j/log4j-over-slf4j "1.7.22"]
 
-                 [pedestal.views "0.1.0-SNAPSHOT"]
+                 [com.cognitect/pedestal.views "0.1.0-SNAPSHOT"]
                  [enlive "1.1.6"]
                  [stencil "0.5.0"]
                  [selmer "1.10.5"]]
