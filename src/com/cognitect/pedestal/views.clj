@@ -24,8 +24,9 @@
     (wrapper contents)))
 
 (defn- render
-  [response async-limit content-type wrapper]
-  (let [contents       ((:render-fn response) response)
+  [ctx async-limit content-type wrapper]
+  (let [response       (:response ctx)
+        contents       ((get-in ctx [:response :render-fn] identity) ctx)
         contents       (if (coll? contents)
                          (apply str contents)
                          contents)
@@ -36,10 +37,9 @@
                               "Content-Type"   content-type)
         body           (format-body contents content-length async-limit wrapper)
         status         (:status response 200)]
-    (assoc response
-           :body    body
-           :headers headers
-           :status  status)))
+    (update ctx :response merge {:body    body
+                                 :headers headers
+                                 :status  status})))
 
 (defn- needs-rendering?
   [ctx]
@@ -69,7 +69,7 @@
          (-> ctx
              render-fn-resolver
              assert-render-fn!
-             (update :response render async-limit content-type wrapper))
+             (render async-limit content-type wrapper))
          ctx)))})
 
 (defn- kw->sym [k]
@@ -95,16 +95,16 @@
     (symbol?  selector) (some-> selector resolve var-get-if-bound)
     (keyword? selector) (some-> selector kw->sym resolve var-get-if-bound)))
 
-(defn attach-renderer
+(defn- attach-renderer
   [ctx f]
   (assoc-in ctx [:response :render-fn] f))
 
-(defn view-function-resolver
+(defn- view-function-resolver
   "Resolves the :view in the ctx's response to a render fn and attaches it."
   [ctx]
   (attach-renderer ctx (locate-render-fn (some-> ctx :response :view))))
 
-(defn make-template-resolver
+(defn- make-template-resolver
   "Returns a view-template-resolver fn which resolves the :view
   in the ctx's response to a template-based render fn and attaches it."
   [template-render-fn]
@@ -142,11 +142,11 @@
 ;; The several functions are copied from Vase
 ;;
 ;; It is duplication, but in this case preferrable to a new dependency.
-(defn map-vals
+(defn- map-vals
   [f m]
   (reduce-kv (fn [m k v] (assoc m k (f v))) m m))
 
-(defn dynamic-interceptor
+(defn- dynamic-interceptor
   "Build an interceptor/interceptor from a map of keys to
   expressions. The expressions will be evaluated and must evaluate to
   a function of 1 argument. At runtime the function will be called
@@ -159,7 +159,7 @@
       (map-vals eval exprs)))
     {:action-literal literal}))
 
-(defn decode-map
+(defn- decode-map
   "URL Decode the values of a Map
   This opens up the potential for non-sanitized input to be rendered."
   [m]
@@ -191,7 +191,7 @@
 ;; end of snitching from Vase
 ;;
 
-(defn render-action-exprs
+(defn- render-action-exprs
   "Return code for a Pedestal interceptor that will respond with a
   canned response. The same `body`, `status`, and `headers` arguments
   are returned for every HTTP request."
@@ -201,7 +201,7 @@
            key#           ~view]
        (assoc-in ~'context [:response :view] key#))))
 
-(defn render-action
+(defn- render-action
   "Return a Pedestal interceptor that attaches a view key to the
   response"
   [name params view]
