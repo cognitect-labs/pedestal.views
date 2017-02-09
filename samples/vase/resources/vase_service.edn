@@ -13,14 +13,17 @@
   :vase/apis
   {:sample.vase/v1
    {:vase.api/routes
-    {"/users"     {:get  [#vase/query{:name   :sample.vase.v1/users-q
-                                      :params []
+    {"/users"     {:get  [#vase/query{:params []
                                       :query  [:find ?id ?email
                                                :where
                                                [?e :user/userId ?id]
                                                [?e :user/userEmail ?email]]}
+                          #vase/conform{:from :com.cognitect.vase.actions/query-data
+                                        :spec (clojure.spec/* (clojure.spec/spec (clojure.spec/cat :userid integer? :email string?)))
+                                        :to   :users}
                           #views/render{:name :sample.vase.v1/users-page
-                                        :view :users}]}
+                                        :view :users
+                                        :from :users}]}
 
      "/users/:id" {:get  #vase/query{:name       :sample.vase.v1/user-id-page
                                      :params     [id]
@@ -51,7 +54,7 @@
     ;; #views/engine{:engine-type :selmer}
 
     ;; Use Stencil. View keys map to ".mustache" files in "resources"
-    :vase.api/interceptors    [#views/engine{:engine-type :stencil}]
+    :vase.api/interceptors    [com.cognitect.pedestal.views.stencil/renderer]
 
     ;; This sample project has Stencil in its dependencies, so
     ;; Pedestal.views can use it. Pedestal.views does _not_

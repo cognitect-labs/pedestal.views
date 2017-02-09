@@ -7,7 +7,7 @@
   (:import clojure.lang.ExceptionInfo
            java.nio.ByteBuffer))
 
-(defn- run-interceptor
+(defn run-interceptor
   ([i]     (run-interceptor {} i))
   ([ctx i] (chain/execute (chain/enqueue* ctx i))))
 
@@ -88,18 +88,35 @@
 (deftest long-messages-are-async
   (is (async-response? (canned-text (repeat 4096 "A")))))
 
+(defn- rendered-with [renderer response]
+  (run-interceptor {:response response} renderer))
+
 (deftest template-renderer-tests
   (testing "Rendering with Stencil"
     (is (= "cake\n"
-           (-> (run-interceptor {:response {:view :example-stencil :dessert "cake"}}
-                                stencil/renderer)
+           (-> (rendered-with stencil/renderer
+                              {:view :example-stencil :dessert "cake"})
                :response
                :body))))
   (testing "Rendering with Selmer"
     (is (= "cake\n"
-           (-> (run-interceptor {:response {:view :example-selmer :dessert "cake"}}
-                                selmer/renderer)
+           (-> (rendered-with selmer/renderer
+                              {:view :example-selmer :dessert "cake"})
                :response
                :body)))))
 
-(run-tests)
+(deftest extract-from-tests
+  (testing "From context"
+    (is (= "cookies"
+           (:body (rendered {:response
+                             {:view #(get % :dessert)
+                              :dessert "cookies"
+                              :from :response}}))))
+    (is (= "Brussels Sprouts"
+           (:body (rendered {:query-data "Brussels Sprouts"
+                             :response {:view identity
+                                        :from :query-data}}))))
+    (is (= "Russel's Spouts"
+           (:body (rendered {:com.cognitect.vase.actions/query-data "Russel's Spouts"
+                             :response {:view identity
+                                        :from :com.cognitect.vase.actions/query-data}}))))))

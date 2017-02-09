@@ -26,7 +26,8 @@
 (defn- render
   [ctx async-limit content-type wrapper]
   (let [response       (:response ctx)
-        contents       ((get-in ctx [:response :render-fn] identity) ctx)
+        from           (or (some-> response :from vector) [])
+        contents       ((get-in ctx [:response :render-fn] identity) (get-in ctx from))
         contents       (if (coll? contents)
                          (apply str contents)
                          contents)
@@ -121,24 +122,6 @@
 
 (def renderer (make-renderer view-function-resolver))
 
-(defn- dynaload
-  [s]
-  (let [nssym (symbol (namespace s))
-        _     (require :reload nssym)
-        n     (find-ns nssym)]
-    (var-get (ns-resolve n (symbol (name s))))))
-
-(s/def ::engine-type    #{:default :stencil :selmer})
-(s/def ::engine-literal (s/keys :opt-un [::engine-type]))
-
-(defn engine-literal
-  [form]
-  {:pre [(s/valid? ::engine-literal form)]}
-  (case (get form :engine-type :default)
-    :default renderer
-    :stencil (dynaload 'com.cognitect.pedestal.views.stencil/renderer)
-    :selmer  (dynaload 'com.cognitect.pedestal.views.selmer/renderer)))
-
 ;; The several functions are copied from Vase
 ;;
 ;; It is duplication, but in this case preferrable to a new dependency.
@@ -187,6 +170,7 @@
         param-defaults (into {} (filter vector? param-syms))]
     `{:keys ~(or param-keys [])
       :or ~param-defaults}))
+
 ;;
 ;; end of snitching from Vase
 ;;
@@ -195,32 +179,32 @@
   "Return code for a Pedestal interceptor that will respond with a
   canned response. The same `body`, `status`, and `headers` arguments
   are returned for every HTTP request."
-  [params view]
+  [params view from]
   `(fn [{~'request :request :as ~'context}]
-     (let [~(bind params) (merged-parameters ~'request)
-           key#           ~view]
-       (assoc-in ~'context [:response :view] key#))))
+     (let [~(bind params) (merged-parameters ~'request)]
+       (update ~'context :response assoc :view ~view :from ~from))))
 
 (defn- render-action
   "Return a Pedestal interceptor that attaches a view key to the
   response"
-  [name params view]
+  [name params view from]
   (dynamic-interceptor
    name
    :respond
-   {:enter (render-action-exprs params view)
+   {:enter (render-action-exprs params view from)
     :action-literal
     :views/render}))
 
-(defrecord RenderAction [name params view]
+(defrecord RenderAction [name params view from]
   i/IntoInterceptor
   (-interceptor [_]
-    (render-action name params view)))
+    (render-action name params view from)))
 
 (s/def ::name keyword?)
 (s/def ::view keyword?)
+(s/def ::from keyword?)
 (s/def ::params seq?)
-(s/def ::render-literal (s/keys :req-un [::name ::view] :opt-un [::params]))
+(s/def ::render-literal (s/keys :req-un [::view] :opt-un [::params ::name ::from]))
 
 (defn render-literal
   [form]
