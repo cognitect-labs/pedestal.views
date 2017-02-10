@@ -13,7 +13,8 @@
   :vase/apis
   {:sample.vase/v1
    {:vase.api/routes
-    {"/users"     {:get  [#vase/query{:params []
+    {"/users"     {:get  [#vase/query{:name   :sample.vase.v1/user-q
+                                      :params []
                                       :query  [:find ?id ?email
                                                :where
                                                [?e :user/userId ?id]

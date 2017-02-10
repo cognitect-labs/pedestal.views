@@ -4,6 +4,7 @@
             [io.pedestal.http.route :as route]
             [com.cognitect.vase :as vase]
             [com.cognitect.pedestal.views :as views]
+            [com.cognitect.pedestal.views.stencil :as stencil]
             [vase.service :as service]))
 
 (defn activate-vase
