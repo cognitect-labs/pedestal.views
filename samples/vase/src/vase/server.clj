@@ -5,7 +5,8 @@
             [com.cognitect.vase :as vase]
             [com.cognitect.pedestal.views :as views]
             [com.cognitect.pedestal.views.stencil :as stencil]
-            [vase.service :as service]))
+            [vase.service :as service]
+            [stencil.loader :as sl]))
 
 (defn activate-vase
   ([base-routes api-root spec-paths]
@@ -46,18 +47,20 @@
   [& args]
   (println "\nCreating your [DEV] server...")
   (-> service/service ;; start with production configuration
-      (merge {:env :dev
+      (merge {:env                     :dev
               ;; do not block thread that starts web server
-              ::server/join? false
+              ::server/join?           false
               ;; Routes can be a function that resolve routes,
               ;;  we can use this to set the routes to be reloadable
-              ::server/routes #(route/expand-routes
-                                 (::routes (activate-vase (deref #'service/routes)
-                                                          (::vase/api-root service/service)
-                                                          (mapv (fn [res-str]
-                                                                  (str "resources/" res-str))
-                                                                (::vase/spec-resources service/service))
-                                                          vase/load-edn-file)))
+              ::server/routes          #(do
+                                          (sl/invalidate-cache)
+                                          (route/expand-routes
+                                           (::routes (activate-vase (deref #'service/routes)
+                                                                    (::vase/api-root service/service)
+                                                                    (mapv (fn [res-str]
+                                                                            (str "resources/" res-str))
+                                                                          (::vase/spec-resources service/service))
+                                                                    vase/load-edn-file))))
               ;; all origins are allowed in dev mode
               ::server/allowed-origins {:creds true :allowed-origins (constantly true)}})
       ;; Wire up interceptor chains
