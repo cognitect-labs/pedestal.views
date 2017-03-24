@@ -13,38 +13,46 @@
   :vase/apis
   {:sample.vase/v1
    {:vase.api/routes
-    {"/users"     {:get  [#vase/query{:name   :sample.vase.v1/user-q
-                                      :params []
-                                      :query  [:find ?id ?email
-                                               :where
-                                               [?e :user/userId ?id]
-                                               [?e :user/userEmail ?email]]}
-                          #vase/conform{:from :com.cognitect.vase.actions/query-data
-                                        :spec (clojure.spec/* (clojure.spec/spec (clojure.spec/cat :userid integer? :email string?)))
-                                        :to   :users}
-                          #views/render{:name :sample.vase.v1/users-page
-                                        :view :users
-                                        :from :users}]}
+    {"/users" {:get  [#vase/query{:name   :sample.vase.v1/user-q
+                                  :params []
+                                  :query  [:find ?id ?email
+                                           :where
+                                           [?e :user/userId ?id]
+                                           [?e :user/userEmail ?email]]}
+                      #vase/conform{:from :com.cognitect.vase.actions/query-data
+                                    :spec (clojure.spec/* (clojure.spec/spec (clojure.spec/cat :userid integer? :email string?)))
+                                    :to   :users}
+                      #views/render{:name :sample.vase.v1/users-page
+                                    :view :users
+                                    :from :users}]
+               :post [#vase/intercept {:name  :sample.vase.v1/redirect-after-post
+                                       :leave (fn [ctx]
+                                                (let [{{:keys [status]} :response} ctx]
+                                                  (if (= 200 status)
+                                                    (assoc ctx :response {:status  303
+                                                                          :headers {"Location" (io.pedestal.http.route/url-for :sample.vase.v1/users-page :absolute? true)}
+                                                                          :body    ""})
+                                                    ctx)))}
+                      #vase/transact {:name       :sample.vase.v1/user-create
+                                      :properties [:db/id
+                                                   :user/userId
+                                                   :user/userEmail
+                                                   :user/userBio]}]}
 
-     "/users/:id" {:get  #vase/query{:name       :sample.vase.v1/user-id-page
-                                     :params     [id]
-                                     :edn-coerce [id]
-                                     :query      [:find ?e
-                                                  :in $ ?id
-                                                  :where
-                                                  [?e :user/userId ?id]]}}
+     "/users/:id" {:get #vase/query{:name       :sample.vase.v1/user-id-page
+                                    :params     [id]
+                                    :edn-coerce [id]
+                                    :query      [:find ?e
+                                                 :in $ ?id
+                                                 :where
+                                                 [?e :user/userId ?id]]}}
 
-     "/user"      {:get  #vase/query{:name   :sample.vase.v1/user-page
-                                     :params [email]
-                                     :query  [:find ?e
-                                              :in $ ?email
-                                              :where
-                                              [?e :user/userEmail ?email]]}
-                   :post #vase/transact{:name       :sample.vase.v1/user-create
-                                        :properties [:db/id
-                                                     :user/userId
-                                                     :user/userEmail
-                                                     :user/userBio]}}}
+     "/user" {:get #vase/query{:name   :sample.vase.v1/user-page
+                               :params [email]
+                               :query  [:find ?e
+                                        :in $ ?email
+                                        :where
+                                        [?e :user/userEmail ?email]]}}}
 
     ;; Add a #views/engine here. Should be one of the following:
     ;;
@@ -55,10 +63,10 @@
     ;; #views/engine{:engine-type :selmer}
 
     ;; Use Stencil. View keys map to ".mustache" files in "resources"
-    :vase.api/interceptors    [com.cognitect.pedestal.views.stencil/renderer]
+    :vase.api/interceptors [com.cognitect.pedestal.views.stencil/renderer]
 
     ;; This sample project has Stencil in its dependencies, so
     ;; Pedestal.views can use it. Pedestal.views does _not_
     ;; automatically pull in Stencil or Selmer as transitive dependencies.
 
-    :vase.api/schemas         [:sample.vase/user-schema]}}}}
+    :vase.api/schemas [:sample.vase/user-schema]}}}}
