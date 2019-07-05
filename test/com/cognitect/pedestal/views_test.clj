@@ -109,9 +109,14 @@
   (testing "From context"
     (is (= "cookies"
            (:body (rendered {:response
-                             {:view #(get % :dessert)
+                             {:view    #(get % :dessert)
                               :dessert "cookies"
-                              :from :response}}))))
+                              :from    :response}}))))
+    (is (= "cookies"
+           (:body (rendered {:response
+                             {:view    #(get % :dessert)
+                              :dessert "cookies"}})))
+        "Should use `:response` as default `:from`.")
     (is (= "Brussels Sprouts"
            (:body (rendered {:query-data "Brussels Sprouts"
                              :response {:view identity

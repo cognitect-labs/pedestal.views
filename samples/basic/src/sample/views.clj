@@ -10,7 +10,3 @@
   [:#title]   (html/substitute (title text))
   [:#wrapper] (html/content body)
   [:a]        (html/set-attr :href url))
-
-(defn home-page-with-stencil
-  [data]
-  (stencil/render-file "layout-stencil" data))

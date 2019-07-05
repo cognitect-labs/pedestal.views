@@ -1,6 +1,6 @@
 (ns com.cognitect.pedestal.views
   (:require [clojure.edn :as edn]
-            [clojure.spec :as s]
+            [clojure.spec.alpha :as s]
             [clojure.walk :as walk]
             [io.pedestal.interceptor :as i]
             [io.pedestal.log :as log])
@@ -26,7 +26,7 @@
 (defn- render
   [ctx async-limit content-type wrapper]
   (let [response       (:response ctx)
-        from           (or (some-> response :from vector) [])
+        from           (or (some-> response :from vector) [:response])
         contents       ((get-in ctx [:response :render-fn] identity) (get-in ctx from))
         contents       (if (coll? contents)
                          (apply str contents)
@@ -59,19 +59,20 @@
 
 (defn make-renderer
   [render-fn-resolver]
-  {:name ::renderer
-   :leave
-   (fn [ctx]
-     (let [^Charset charset StandardCharsets/UTF_8
-           content-type (str "text/html;charset=" (.name charset))
-           wrapper      #(wrap-byte-buffer % charset)
-           async-limit  (async-cutoff ctx)]
-       (if (needs-rendering? ctx)
-         (-> ctx
-             render-fn-resolver
-             assert-render-fn!
-             (render async-limit content-type wrapper))
-         ctx)))})
+  (i/interceptor
+   {:name ::renderer
+    :leave
+    (fn [ctx]
+      (let [^Charset charset StandardCharsets/UTF_8
+            content-type     (str "text/html;charset=" (.name charset))
+            wrapper          #(wrap-byte-buffer % charset)
+            async-limit      (async-cutoff ctx)]
+        (if (needs-rendering? ctx)
+          (-> ctx
+              render-fn-resolver
+              assert-render-fn!
+              (render async-limit content-type wrapper))
+          ctx)))}))
 
 (defn- kw->sym [k]
   (symbol (namespace k) (name k)))

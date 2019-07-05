@@ -20,7 +20,7 @@
                                            [?e :user/userId ?id]
                                            [?e :user/userEmail ?email]]}
                       #vase/conform{:from :com.cognitect.vase.actions/query-data
-                                    :spec (clojure.spec/* (clojure.spec/spec (clojure.spec/cat :userid integer? :email string?)))
+                                    :spec (clojure.spec.alpha/* (clojure.spec.alpha/spec (clojure.spec.alpha/cat :userid integer? :email string?)))
                                     :to   :users}
                       #views/render{:name :sample.vase.v1/users-page
                                     :view :users
@@ -49,7 +49,7 @@
 
      "/user" {:get #vase/query{:name   :sample.vase.v1/user-page
                                :params [email]
-                               :query  [:find ?e
+                               :query  [:find [(pull ?e [*]) ...]
                                         :in $ ?email
                                         :where
                                         [?e :user/userEmail ?email]]}}}

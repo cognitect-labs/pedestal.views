@@ -7,11 +7,11 @@
 
 ## Create a User or Three
 
-    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 500, "user/userEmail": "mtnygard@example.com"}]}' http://localhost:8080/api/sample.vase/v1/user
+    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 500, "user/userEmail": "mtnygard@example.com"}]}' http://localhost:8080/api/sample.vase/v1/users
 
-    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 501, "user/userEmail": "ddeaguiar@example.com"}]}' http://localhost:8080/api/sample.vase/v1/user
+    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 501, "user/userEmail": "ddeaguiar@example.com"}]}' http://localhost:8080/api/sample.vase/v1/users
 
-    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 502, "user/userEmail": "ohpauleez@example.com"}]}' http://localhost:8080/api/sample.vase/v1/user
+    curl -X POST -H "Content-Type: application/json" -d '{"payload": [{"user/userId": 502, "user/userEmail": "ohpauleez@example.com"}]}' http://localhost:8080/api/sample.vase/v1/users
 
 ## See the users
 
